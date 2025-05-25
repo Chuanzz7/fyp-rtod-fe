@@ -12,18 +12,6 @@ const imgRef = ref(null);
 const isStreaming = ref(false);
 const loading = ref(false);
 let retryInterval = null;
-const fps = ref(0);
-let frameCount = 0;
-
-// This will be called every time a new image loads
-function onFrameDisplayed() {
-    frameCount++;
-}
-
-setInterval(() => {
-    fps.value = frameCount;
-    frameCount = 0;
-}, 1000);
 
 async function startStream() {
     if (isStreaming.value || loading.value) return;
@@ -108,7 +96,6 @@ onBeforeUnmount(() => {
                         ref="imgRef"
                         class="w-full border-round-lg"
                         alt="Live video stream"
-                        @load="onFrameDisplayed"
                     />
                     <div v-show="isStreaming" class="text-right text-sm text-color-secondary pr-2 mt-2">
                         FPS: {{ fps }}
