@@ -75,9 +75,10 @@ onBeforeUnmount(() => {
     <div class="p-card w-full">
         <Card>
             <template #header>
-                <div class="flex align-items-center justify-content-between w-full">
-                    <h2 class="m-0 text-xl font-semibold">Live Stream</h2>
+                <div class="flex align-items-center justify-between w-full p-5">
+                    <h2 class="flex m-0 text-xl font-semibold">Live Stream</h2>
                     <Button
+                        class="flex"
                         :label="isStreaming ? 'Stop' : 'Start'"
                         :icon="isStreaming ? 'pi pi-stop' : 'pi pi-play'"
                         :loading="loading"
@@ -90,16 +91,13 @@ onBeforeUnmount(() => {
             </template>
 
             <template #content>
-                <div class="w-full">
+                <div class="w-full px-5">
                     <img
                         v-show="isStreaming"
                         ref="imgRef"
                         class="w-full border-round-lg"
                         alt="Live video stream"
                     />
-                    <div v-show="isStreaming" class="text-right text-sm text-color-secondary pr-2 mt-2">
-                        FPS: {{ fps }}
-                    </div>
                     <p v-if="!isStreaming" class="text-center py-4 text-color-secondary">
                         Click “Start” to begin streaming.
                     </p>
