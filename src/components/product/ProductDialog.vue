@@ -1,0 +1,213 @@
+<script setup>
+import { ref, watch } from "vue";
+import { useToast } from "primevue/usetoast";
+import axios from "axios";
+
+const PROCESSOR_BASE = import.meta.env.VITE_API_BASE_PROCESSOR ?? "";
+
+const toast = useToast();
+
+const props = defineProps({
+    visible: Boolean
+});
+const emit = defineEmits(["update:visible", "save", "cancel"]);
+
+const visible = ref(props.visible);
+watch(() => props.visible, (v) => visible.value = v);
+watch(visible, (v) => emit("update:visible", v));
+
+// For controlled input
+const product = defineModel("product");
+const submitted = ref(false);
+
+// Image upload states
+const preview = ref(product.image || "");
+const imageFile = ref(null);
+const fileInput = ref(null);
+
+// Result and loading state
+const result = ref(null);
+const loading = ref(false);
+
+// Only allow one image, replace if user uploads again
+function onFileChange(e) {
+    const file = e.target.files[0];
+    handleImageFile(file);
+}
+
+function onDrop(e) {
+    const file = e.dataTransfer.files[0];
+    handleImageFile(file);
+}
+
+function handleImageFile(file) {
+    if (file && file.type.startsWith("image/")) {
+        imageFile.value = file;
+        const reader = new FileReader();
+        reader.onload = e => {
+            preview.value = e.target.result;
+            product.image = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        result.value = null; // clear result when new image uploaded
+    }
+}
+
+function removeImage() {
+    imageFile.value = null;
+    preview.value = "";
+    product.image = "";
+    result.value = null;
+}
+
+// Send image to backend for detection and OCR
+async function onDetect() {
+    if (!imageFile.value) return;
+    loading.value = true;
+    result.value = null;
+    const formData = new FormData();
+    formData.append("image", imageFile.value);
+
+    try {
+        const res = await axios.post(`${PROCESSOR_BASE}/api/detect_item`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        });
+        // Axios automatically parses JSON
+        result.value = res.data;
+        product.category = result.value.detections[0].class_name;
+        product.ocr = result.value.ocrTexts;
+
+    } catch (e) {
+        toast.add({ severity: "error", summary: "Failed", detail: e.response.data.detail, life: 3000 });
+    }
+    loading.value = false;
+}
+
+function hideDialog() {
+    emit("cancel");
+    visible.value = false;
+}
+
+function saveProduct() {
+    submitted.value = true;
+    if (result.value == null) {
+        toast.add({ severity: "error", summary: "No Image Detect", detail: "Please detect before save", life: 3000 });
+        return;
+    }
+    console.log(product);
+    emit("save", { ...product });
+    visible.value = false;
+}
+
+const statuses = ref([
+    { label: "INSTOCK", value: "instock" },
+    { label: "LOWSTOCK", value: "lowstock" },
+    { label: "OUTOFSTOCK", value: "outofstock" }
+]);
+</script>
+
+
+<template>
+    <Dialog v-model:visible="visible" :style="{ width: '1000px' }" header="Product Details" :modal="true">
+        <div class="flex flex-col gap-6">
+
+            <!-- Image Upload + Preview + Detect Button -->
+            <div>
+                <label class="block font-bold mb-3">Image</label>
+                <div
+                    class="flex items-center gap-3 border-2 border-dashed rounded p-3 text-center cursor-pointer"
+                    @dragover.prevent
+                    @drop.prevent="onDrop"
+                >
+                    <input
+                        ref="fileInput"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="onFileChange"
+                    />
+                    <div class="flex-1" @click="fileInput.click()" style="min-height: 90px;">
+                        <template v-if="preview">
+                            <img :src="preview" alt="Product" class="block m-auto max-h-24 mb-2" />
+                        </template>
+                        <template v-else>
+                            <p>Click or drag image here to upload</p>
+                        </template>
+                    </div>
+                    <div class="flex flex-col gap-2 items-center">
+                        <Button icon="pi pi-upload" label="Detect & OCR" class="mb-2" @click="onDetect"
+                                :disabled="!imageFile || loading" />
+                        <Button icon="pi pi-times" text @click="removeImage" label="Remove" :disabled="!imageFile" />
+                    </div>
+                </div>
+                <!-- Combined Detection + OCR Result Card (non-editable, always visible if result exists) -->
+                <div v-if="result" class="bg-white rounded-2xl shadow px-4 py-2 border mt-5">
+                    <div class="flex items-center gap-2 ">
+                        <i class="pi pi-eye text-blue-500"></i>
+                        <h3 class="font-semibold text-lg">Detection & OCR Result</h3>
+                    </div>
+                    <!-- Detected Object -->
+                    <div class="mb-2">
+                        <b>Detected Object : </b>
+                        <span v-if="result.detections && result.detections.length">{{ result.detections[0].class_name }}
+                       <span
+                           v-if="result.detections[0].confidence">({{ (result.detections[0].confidence * 100).toFixed(1)
+                           }}%)</span></span>
+                        <span v-else class="text-gray-500">No object detected.</span>
+                    </div>
+                    <!-- OCR Text -->
+                    <div>
+                        <b>OCR Text:</b>
+                        <div
+                            class="whitespace-pre-line p-2 rounded-lg border bg-gray-50 text-gray-700 select-all mt-1"
+                            :style="{ minHeight: '60px', cursor: result.ocrTexts ? 'copy' : 'default' }"
+                            title="Click to copy"
+                            @click="result.ocrTexts && copyToClipboard(result.ocrTexts)">
+                            {{ result.ocrTexts || "No text found." }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Name -->
+            <div>
+                <label for="name" class="block font-bold mb-3">Name</label>
+                <InputText id="name" v-model.trim="product.name" required autofocus
+                           :invalid="submitted && !product.name" fluid />
+                <small v-if="submitted && !product.name" class="text-red-500">Name is required.</small>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="description" class="block font-bold mb-3">Description</label>
+                <Textarea id="description" v-model="product.description" rows="3" cols="20"
+                          :invalid="submitted && !product.description" fluid />
+                <small v-if="submitted && !product.description" class="text-red-500">description is required.</small>
+            </div>
+
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-6">
+                    <label for="quantity" class="block font-bold mb-3">Quantity</label>
+                    <InputNumber id="quantity" v-model="product.quantity" :invalid="submitted && !product.quantity"
+                                 integeronly fluid />
+                    <small v-if="submitted && !product.quantity" class="text-red-500">Quantity is required.</small>
+                </div>
+                <div class="col-span-6">
+                    <label for="inventoryStatus" class="block font-bold mb-3">Inventory Status</label>
+                    <Select id="inventoryStatus" v-model="product.inventoryStatus" :options="statuses"
+                            optionLabel="label" placeholder="Select a Status"
+                            :invalid="submitted && !product.inventoryStatus" fluid></Select>
+                    <small v-if="submitted && !product.inventoryStatus" class="text-red-500">Status is required.</small>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <Button label="Cancel" icon="pi pi-times" text @click="hideDialog" />
+            <Button label="Save" icon="pi pi-check" @click="saveProduct" />
+        </template>
+    </Dialog>
+</template>
+
