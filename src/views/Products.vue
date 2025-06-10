@@ -53,18 +53,27 @@ function hideDialog() {
 
 async function saveProduct() {
     submitted.value = true;
-    console.log(JSON.stringify(selectedProduct.value));
     if (selectedProduct?.value.name?.trim()) {
         try {
+            const payload = {
+                name: selectedProduct.value.name,
+                description: selectedProduct.value.description,
+                category: selectedProduct.value.category,
+                price: selectedProduct.value.price,
+                quantity: selectedProduct.value.quantity,
+                ocr: selectedProduct.value.ocr,
+                inventoryStatus: selectedProduct.value.inventoryStatus.value
+            };
             if (selectedProduct.value.id) {
                 // Update existing
-                await axios.put(`${API_BASE}/${selectedProduct.value.id}`, selectedProduct.value);
+                await axios.put(`${API_BASE}/${selectedProduct.value.id}`, payload);
                 const idx = findIndexById(selectedProduct.value.id);
                 products.value[idx] = { ...selectedProduct.value };
                 toast.add({ severity: "success", summary: "Successful", detail: "Product Updated", life: 3000 });
             } else {
+                console.log("wtf2");
                 // Create new
-                const { data } = await axios.post(API_BASE, selectedProduct.value);
+                const { data } = await axios.post(`${API_BASE}/api/products`, payload);
                 products.value.push(data);
                 toast.add({ severity: "success", summary: "Successful", detail: "Product Created", life: 3000 });
             }
@@ -193,11 +202,6 @@ function getStatusLabel(status) {
                     </template>
                 </Column>
                 <Column field="category" header="Category" sortable style="min-width: 10rem"></Column>
-                <Column field="rating" header="Reviews" sortable style="min-width: 12rem">
-                    <template #body="slotProps">
-                        <Rating :modelValue="slotProps.data.rating" :readonly="true" />
-                    </template>
-                </Column>
                 <Column field="inventoryStatus" header="Status" sortable style="min-width: 12rem">
                     <template #body="slotProps">
                         <Tag :value="slotProps.data.inventoryStatus"

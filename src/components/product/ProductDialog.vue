@@ -76,8 +76,8 @@ async function onDetect() {
         });
         // Axios automatically parses JSON
         result.value = res.data;
-        product.category = result.value.detections[0].class_name;
-        product.ocr = result.value.ocrTexts;
+        product.value.category = result.value.detections[0].class_name;
+        product.value.ocr = result.value.ocrTexts;
 
     } catch (e) {
         toast.add({ severity: "error", summary: "Failed", detail: e.response.data.detail, life: 3000 });
@@ -96,7 +96,6 @@ function saveProduct() {
         toast.add({ severity: "error", summary: "No Image Detect", detail: "Please detect before save", life: 3000 });
         return;
     }
-    console.log(product);
     emit("save", { ...product });
     visible.value = false;
 }

@@ -4,7 +4,7 @@ import Card from "primevue/card";
 import Button from "primevue/button";
 import axios from "axios";
 
-const BASE_URL =import.meta.env.VITE_API_BASE_PROCESSOR ?? "";
+const BASE_URL = import.meta.env.VITE_API_BASE_PROCESSOR ?? "";
 const STREAM_URL = `${BASE_URL}/video_feed`;
 // const STREAM_URL = 'https://placecats.com/neo_banana/300/200'
 
