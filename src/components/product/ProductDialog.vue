@@ -21,9 +21,21 @@ const product = defineModel("product");
 const submitted = ref(false);
 
 // Image upload states
-const preview = ref(product.image || "");
+const preview = ref("");
 const imageFile = ref(null);
 const fileInput = ref(null);
+const dropZone = ref(null);
+
+// Watch for changes to product and update preview accordingly
+watch(() => product.value, (newProduct) => {
+    if (newProduct && newProduct.image) {
+        preview.value = typeof newProduct.image === 'string' && newProduct.image.startsWith('data:')
+            ? newProduct.image
+            : `${import.meta.env.VITE_API_BASE_PRODUCTS}/uploads/${newProduct.image}`;
+    } else {
+        preview.value = "";
+    }
+}, { immediate: true });
 
 // Result and loading state
 const result = ref(null);
@@ -43,10 +55,13 @@ function onDrop(e) {
 function handleImageFile(file) {
     if (file && file.type.startsWith("image/")) {
         imageFile.value = file;
+        // Store the actual file object in product.value.imageFile for form submission
+        product.value.imageFile = file;
+
         const reader = new FileReader();
         reader.onload = e => {
             preview.value = e.target.result;
-            product.image = e.target.result;
+            product.value.image = e.target.result; // Preview image (data URL)
         };
         reader.readAsDataURL(file);
         result.value = null; // clear result when new image uploaded
@@ -56,7 +71,8 @@ function handleImageFile(file) {
 function removeImage() {
     imageFile.value = null;
     preview.value = "";
-    product.image = "";
+    product.value.image = "";
+    product.value.imageFile = null; // Also clear the file object from product.value
     result.value = null;
 }
 
@@ -92,12 +108,36 @@ function hideDialog() {
 
 function saveProduct() {
     submitted.value = true;
-    if (result.value == null) {
+
+    // Check if the product has all required fields
+    if (!product.value.name?.trim()) {
+        toast.add({ severity: "error", summary: "Validation Error", detail: "Product name is required", life: 3000 });
+        return;
+    }
+
+    // For new uploads, ensure detection has been run
+    if (imageFile.value && !result.value) {
         toast.add({ severity: "error", summary: "No Image Detect", detail: "Please detect before save", life: 3000 });
         return;
     }
+
+    // If editing with existing image and no new upload, allow save without detection
+    if (!imageFile.value && preview.value && !result.value && product.value.id) {
+        // Continue with save for edit operations with existing images
+    }
+
     emit("save", { ...product });
     visible.value = false;
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            toast.add({ severity: "success", summary: "Copied", detail: "Text copied to clipboard", life: 2000 });
+        })
+        .catch(() => {
+            toast.add({ severity: "error", summary: "Failed", detail: "Could not copy text", life: 3000 });
+        });
 }
 
 const statuses = ref([
@@ -116,9 +156,11 @@ const statuses = ref([
             <div>
                 <label class="block font-bold mb-3">Image</label>
                 <div
-                    class="flex items-center gap-3 border-2 border-dashed rounded p-3 text-center cursor-pointer"
-                    @dragover.prevent
-                    @drop.prevent="onDrop"
+                    ref="dropZone"
+                    class="flex items-center gap-3 border-2 border-dashed rounded p-3 text-center cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:border-primary"
+                    @dragover.prevent="(e) => dropZone.value?.classList.add('bg-gray-50', 'border-primary')"
+                    @dragleave.prevent="(e) => dropZone.value?.classList.remove('bg-gray-50', 'border-primary')"
+                    @drop.prevent="(e) => { onDrop(e); dropZone.value?.classList.remove('bg-gray-50', 'border-primary'); }"
                 >
                     <input
                         ref="fileInput"
@@ -127,12 +169,14 @@ const statuses = ref([
                         class="hidden"
                         @change="onFileChange"
                     />
-                    <div class="flex-1" @click="fileInput.click()" style="min-height: 90px;">
+                    <div class="flex-1 flex flex-col items-center justify-center" @click="fileInput.click()" style="min-height: 90px;">
                         <template v-if="preview">
                             <img :src="preview" alt="Product" class="block m-auto max-h-24 mb-2" />
                         </template>
                         <template v-else>
-                            <p>Click or drag image here to upload</p>
+                            <i class="pi pi-image text-gray-400 text-3xl mb-2"></i>
+                            <p class="text-gray-500">Click or drag image here to upload</p>
+                            <p class="text-xs text-gray-400 mt-1">Supported formats: JPG, PNG, GIF</p>
                         </template>
                     </div>
                     <div class="flex flex-col gap-2 items-center">
@@ -186,17 +230,33 @@ const statuses = ref([
                 <small v-if="submitted && !product.description" class="text-red-500">description is required.</small>
             </div>
 
+            <!-- Price and quantity in same row -->
             <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-6">
+                    <label for="price" class="block font-bold mb-3">Price ($)</label>
+                    <InputNumber id="price" v-model="product.price" mode="currency" currency="USD" locale="en-US"
+                                 :invalid="submitted && !product.price" fluid />
+                    <small v-if="submitted && !product.price" class="text-red-500">Price is required.</small>
+                </div>
                 <div class="col-span-6">
                     <label for="quantity" class="block font-bold mb-3">Quantity</label>
                     <InputNumber id="quantity" v-model="product.quantity" :invalid="submitted && !product.quantity"
                                  integeronly fluid />
                     <small v-if="submitted && !product.quantity" class="text-red-500">Quantity is required.</small>
                 </div>
+            </div>
+
+            <!-- Category and status in same row -->
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-6">
+                    <label for="category" class="block font-bold mb-3">Category</label>
+                    <InputText id="category" v-model.trim="product.category" :invalid="submitted && !product.category" fluid />
+                    <small v-if="submitted && !product.category" class="text-red-500">Category is required.</small>
+                </div>
                 <div class="col-span-6">
                     <label for="inventoryStatus" class="block font-bold mb-3">Inventory Status</label>
                     <Select id="inventoryStatus" v-model="product.inventoryStatus" :options="statuses"
-                            optionLabel="label" placeholder="Select a Status"
+                            optionLabel="label" optionValue="value" placeholder="Select a Status"
                             :invalid="submitted && !product.inventoryStatus" fluid></Select>
                     <small v-if="submitted && !product.inventoryStatus" class="text-red-500">Status is required.</small>
                 </div>
