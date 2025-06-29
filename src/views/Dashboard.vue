@@ -11,7 +11,7 @@
         </div>
 
         <!-- Loading Spinner -->
-        <div v-if="loading && !pipelineSteps.length" class="col-12 text-center">
+        <div v-if="loading" class="col-12 text-center">
             <ProgressSpinner />
             <p>Fetching initial metrics...</p>
         </div>
@@ -21,39 +21,25 @@
             <Message severity="error" :closable="false">{{ error }}</Message>
         </div>
 
-        <!-- The Main Timeline Component -->
-        <div class="col-12">
+        <!-- ======================================================= -->
+        <!-- TIMELINE 1: FRAME INGESTION (LEFT ALIGNED)              -->
+        <!-- ======================================================= -->
+        <div class="col-12" v-if="!loading">
             <div class="card">
-                <Timeline :value="pipelineSteps" align="alternate" class="customized-timeline">
-
+                <Timeline :value="ingestionSteps" align="left" class="customized-timeline">
+                    <!-- The #marker slot now checks if the item is a header -->
                     <template #marker="slotProps">
-                        <!-- Render a large marker for group headers -->
-                        <span v-if="slotProps.item.isHeader"
-                              class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2"
-                              :style="{ backgroundColor: slotProps.item.color }">
-                            <i :class="[slotProps.item.icon, 'align-items-center']" style="font-size: xx-large"></i>
+                        <span v-if="slotProps.item.isHeader" class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2" :style="{ backgroundColor: slotProps.item.color }">
+                            <i :class="[slotProps.item.icon]" style="font-size: xx-large"></i>
                         </span>
-                        <!-- Render a smaller marker for regular metric items -->
-                        <span v-else
-                              class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
-                              :style="{ backgroundColor: slotProps.item.color }">
-                        </span>
+                        <span v-else class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }"></span>
                     </template>
-
-                    <!-- Slot #2: Main content area -->
+                    <!-- The #content slot also checks if the item is a header -->
                     <template #content="slotProps">
-                        <!-- Render a title card for group headers -->
-                        <div v-if="slotProps.item.isHeader" class="text-xl font-bold p-2">
-                            {{ slotProps.item.title }}
-                        </div>
-                        <!-- Render the full metric card for regular items -->
+                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}</div>
                         <Card v-else>
-                            <template #title>
-                                <div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div>
-                            </template>
-                            <template #subtitle>
-                                <div class="text-base">{{ getUnit(slotProps.item.name) }}</div>
-                            </template>
+                            <template #title><div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div></template>
+                            <template #subtitle><div class="text-base">{{ getUnit(slotProps.item.name) }}</div></template>
                             <template #content>
                                 <div class="mb-3">
                                     <span class="text-500">Last: </span>
@@ -63,10 +49,8 @@
                             </template>
                         </Card>
                     </template>
-
                     <template #opposite="slotProps">
-                        <div v-if="slotProps.item.isHeader"> </div>
-                        <div v-else class="p-2">
+                        <div v-if="!slotProps.item.isHeader" class="p-2">
                             <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3) }}</strong></div>
                             <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3) }}</strong></div>
                         </div>
@@ -74,8 +58,86 @@
                 </Timeline>
             </div>
         </div>
+
+        <!-- ======================================================= -->
+        <!-- TIMELINE 2: AI PROCESSING (RIGHT ALIGNED)               -->
+        <!-- ======================================================= -->
+        <div class="col-12" v-if="!loading">
+            <div class="card">
+                <Timeline :value="aiProcessingSteps" align="right" class="customized-timeline">
+                    <!-- The #marker slot now checks if the item is a header -->
+                    <template #marker="slotProps">
+                        <span v-if="slotProps.item.isHeader" class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2" :style="{ backgroundColor: slotProps.item.color }">
+                            <i :class="[slotProps.item.icon]" style="font-size: xx-large"></i>
+                        </span>
+                        <span v-else class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }"></span>
+                    </template>
+                    <!-- The #content slot also checks if the item is a header -->
+                    <template #content="slotProps">
+                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}</div>
+                        <Card v-else>
+                            <template #title><div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div></template>
+                            <template #subtitle><div class="text-base">{{ getUnit(slotProps.item.name) }}</div></template>
+                            <template #content>
+                                <div class="mb-3">
+                                    <span class="text-500">Last: </span>
+                                    <span class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3) }}</span>
+                                </div>
+                                <Chart type="line" :data="chartData[slotProps.item.name]" :options="chartOptions"></Chart>
+                            </template>
+                        </Card>
+                    </template>
+                    <template #opposite="slotProps">
+                        <div v-if="!slotProps.item.isHeader" class="p-2">
+                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3) }}</strong></div>
+                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3) }}</strong></div>
+                        </div>
+                    </template>
+                </Timeline>
+            </div>
+        </div>
+
+        <!-- ======================================================= -->
+        <!-- TIMELINE 3: OUTPUT GENERATION (LEFT ALIGNED)            -->
+        <!-- ======================================================= -->
+        <div class="col-12" v-if="!loading">
+            <div class="card">
+                <Timeline :value="outputSteps" align="left" class="customized-timeline">
+                    <!-- The #marker slot now checks if the item is a header -->
+                    <template #marker="slotProps">
+                        <span v-if="slotProps.item.isHeader" class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2" :style="{ backgroundColor: slotProps.item.color }">
+                            <i :class="[slotProps.item.icon]" style="font-size: xx-large" ></i>
+                        </span>
+                        <span v-else class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }"></span>
+                    </template>
+                    <!-- The #content slot also checks if the item is a header -->
+                    <template #content="slotProps">
+                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}</div>
+                        <Card v-else>
+                            <template #title><div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div></template>
+                            <template #subtitle><div class="text-base">{{ getUnit(slotProps.item.name) }}</div></template>
+                            <template #content>
+                                <div class="mb-3">
+                                    <span class="text-500">Last: </span>
+                                    <span class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3) }}</span>
+                                </div>
+                                <Chart type="line" :data="chartData[slotProps.item.name]" :options="chartOptions"></Chart>
+                            </template>
+                        </Card>
+                    </template>
+                    <template #opposite="slotProps">
+                        <div v-if="!slotProps.item.isHeader" class="p-2">
+                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3) }}</strong></div>
+                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3) }}</strong></div>
+                        </div>
+                    </template>
+                </Timeline>
+            </div>
+        </div>
+
     </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
@@ -120,59 +182,58 @@ const pipelineGroups = [
             'output_panel_time_ms',
             'output_api_time_ms',
             'output_draw_time_ms',
-            'output_panel_enrich_time_ms',
+            'output_encode_time_ms',
             'output_total_processing_time_ms',
             'output_fps'
         ]
     }
 ];
 
-// --- NEW: Computed property to transform grouped data into a single timeline array ---
-const pipelineSteps = computed(() => {
-    const steps = [];
-
-    // Iterate over our defined groups
-    pipelineGroups.forEach(group => {
-        // First, add a special "header" object for the group itself
-        steps.push({
-            isHeader: true, // A flag to identify this item as a header
-            title: group.title,
-            icon: group.icon,
-            color: group.color
-        });
-
-        // Then, add all the metric items that belong to this group
-        group.metrics.forEach(metricName => {
-            const metricData = metrics.value[metricName];
-            if (metricData) {
-                steps.push({
-                    isHeader: false, // This is a regular metric item
-                    name: metricName,
-                    metric: metricData,
-                    icon: group.icon, // Use the group's icon and color for consistency
-                    color: group.color
-                });
-            }
-        });
-    });
-
-    return steps;
-});
 
 
-// --- Chart Configuration (unchanged) ---
+/// --- NEW: Helper function and 3 separate computed properties ---
+// A reusable function to generate the steps for a specific group.
+const createTimelineSteps = (groupTitle) => {
+    const group = pipelineGroups.find(g => g.title === groupTitle);
+    if (!group) return [];
+
+    // Create the special header object for this group
+    const header = {
+        isHeader: true,
+        title: group.title,
+        icon: group.icon,
+        color: group.color
+    };
+
+    // Create the array of regular metric items
+    const metricItems = group.metrics.map(metricName => {
+        const metricData = metrics.value[metricName];
+        if (metricData) {
+            return {
+                isHeader: false, // Mark this as a regular item
+                name: metricName,
+                metric: metricData,
+                color: group.color,
+            };
+        }
+        return null;
+    }).filter(Boolean);
+
+    // Return a new array with the header at the start
+    return [header, ...metricItems];
+};
+
+// Create a computed property for each timeline.
+const ingestionSteps = computed(() => createTimelineSteps('Frame Ingestion'));
+const aiProcessingSteps = computed(() => createTimelineSteps('AI Processing'));
+const outputSteps = computed(() => createTimelineSteps('Output Generation'));
+
+// --- Chart Options (unchanged) ---
 const chartOptions = {
-    // ADD THIS ANIMATION BLOCK
-    animation: {
-        duration: 0 // Disables all animation during updates
-    },
-
-    // --- EXISTING OPTIONS ---
+    animation: { duration: 0 },
     maintainAspectRatio: false,
     aspectRatio: 1.8,
-    plugins: {
-        legend: { display: false }
-    },
+    plugins: { legend: { display: false } },
     scales: {
         x: { ticks: { display: false }, grid: { display: false } },
         y: { ticks: { color: '#495057', font: { size: 10 } }, grid: { color: '#ebedef' } }
@@ -181,7 +242,7 @@ const chartOptions = {
     tension: 0.4
 };
 
-// --- Data Fetching Logic (unchanged) ---
+// --- Data Fetching, Chart Updates, Lifecyle, Helpers (all unchanged) ---
 const fetchData = async () => {
     try {
         const response = await axios.get(`${BASE_URL}/api/metrics`);
@@ -200,16 +261,13 @@ const fetchData = async () => {
     } finally { loading.value = false; }
 };
 
-// --- Chart Update Logic (unchanged) ---
 const MAX_CHART_POINTS = 30;
 const updateAllCharts = (newMetrics) => {
     for (const name in newMetrics) {
         const lastValue = newMetrics[name].last;
         const currentData = chartData.value[name]?.datasets[0]?.data || [];
         const newData = [...currentData, lastValue];
-
         if (newData.length > MAX_CHART_POINTS) newData.shift();
-
         chartData.value[name] = {
             labels: Array(newData.length).fill(''),
             datasets: [{
@@ -220,7 +278,6 @@ const updateAllCharts = (newMetrics) => {
     }
 };
 
-// --- Lifecycle & Helpers (unchanged) ---
 onMounted(() => {
     fetchData();
     intervalId = setInterval(fetchData, 3000);
