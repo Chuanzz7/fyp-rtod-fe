@@ -3,7 +3,7 @@ import { ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import axios from "axios";
 
-const PROCESSOR_BASE = import.meta.env.VITE_API_BASE_PROCESSOR ?? "";
+const PRODUCT_BASE = import.meta.env.VITE_API_BASE_PRODUCTS ?? "";
 
 const toast = useToast();
 
@@ -85,7 +85,7 @@ async function onDetect() {
     formData.append("image", imageFile.value);
 
     try {
-        const res = await axios.post(`${PROCESSOR_BASE}/api/detect_item`, formData, {
+        const res = await axios.post(`${PRODUCT_BASE}/api/detect_item`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data"
             }
@@ -96,7 +96,7 @@ async function onDetect() {
         product.value.ocr = result.value.ocrTexts;
 
     } catch (e) {
-        toast.add({ severity: "error", summary: "Failed", detail: e.response.data.detail, life: 3000 });
+        toast.add({ severity: "error", summary: "Failed", detail: e.response?.data?.detail, life: 3000 });
     }
     loading.value = false;
 }

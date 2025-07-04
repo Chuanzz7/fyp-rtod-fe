@@ -334,7 +334,9 @@ async function performProductLookup() {
 
                 <Column selectionMode="multiple" style="width: 3rem" :exportable="false"></Column>
                 <Column field="code" header="Code" sortable style="min-width: 12rem"></Column>
+                <Column field="category" header="Category" sortable style="min-width: 10rem"></Column>
                 <Column field="name" header="Name" sortable style="min-width: 16rem"></Column>
+                <Column field="quantity" header="Quantity" sortable style="min-width: 8rem"></Column>
                 <Column header="Image">
                     <template #body="slotProps">
                         <img :src="getImageUrl(slotProps.data.image)"
@@ -346,7 +348,6 @@ async function performProductLookup() {
                         {{ formatCurrency(slotProps.data.price) }}
                     </template>
                 </Column>
-                <Column field="category" header="Category" sortable style="min-width: 10rem"></Column>
                 <Column field="inventoryStatus" header="Status" sortable style="min-width: 12rem">
                     <template #body="slotProps">
                         <Tag :value="slotProps.data.inventoryStatus"

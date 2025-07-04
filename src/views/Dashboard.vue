@@ -5,7 +5,7 @@
                 <h5>Application Performance Pipeline</h5>
                 <p>
                     Live metrics from the application's processing stages, automatically refreshing every 3 seconds.
-                    Last updated: {{ lastUpdateTime || 'N/A' }}
+                    Last updated: {{ lastUpdateTime || "N/A" }}
                 </p>
             </div>
         </div>
@@ -29,30 +29,44 @@
                 <Timeline :value="ingestionSteps" align="left" class="customized-timeline">
                     <!-- The #marker slot now checks if the item is a header -->
                     <template #marker="slotProps">
-                        <span v-if="slotProps.item.isHeader" class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2" :style="{ backgroundColor: slotProps.item.color }">
+                        <span v-if="slotProps.item.isHeader"
+                              class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2"
+                              :style="{ backgroundColor: slotProps.item.color }">
                             <i :class="[slotProps.item.icon]" style="font-size: xx-large"></i>
                         </span>
-                        <span v-else class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }"></span>
+                        <span v-else
+                              class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
+                              :style="{ backgroundColor: slotProps.item.color }"></span>
                     </template>
                     <!-- The #content slot also checks if the item is a header -->
                     <template #content="slotProps">
-                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}</div>
+                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}
+                        </div>
                         <Card v-else>
-                            <template #title><div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div></template>
-                            <template #subtitle><div class="text-base">{{ getUnit(slotProps.item.name) }}</div></template>
+                            <template #title>
+                                <div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div>
+                            </template>
+                            <template #subtitle>
+                                <div class="text-base">{{ getUnit(slotProps.item.name) }}</div>
+                            </template>
                             <template #content>
                                 <div class="mb-3">
                                     <span class="text-500">Last: </span>
-                                    <span class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3) }}</span>
+                                    <span
+                                        class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3)
+                                        }}</span>
                                 </div>
-                                <Chart type="line" :data="chartData[slotProps.item.name]" :options="chartOptions"></Chart>
+                                <Chart type="line" :data="chartData[slotProps.item.name]"
+                                       :options="chartOptions"></Chart>
                             </template>
                         </Card>
                     </template>
                     <template #opposite="slotProps">
                         <div v-if="!slotProps.item.isHeader" class="p-2">
-                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3) }}</strong></div>
-                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3) }}</strong></div>
+                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3)
+                                }}</strong></div>
+                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3)
+                                }}</strong></div>
                         </div>
                     </template>
                 </Timeline>
@@ -67,30 +81,44 @@
                 <Timeline :value="aiProcessingSteps" align="right" class="customized-timeline">
                     <!-- The #marker slot now checks if the item is a header -->
                     <template #marker="slotProps">
-                        <span v-if="slotProps.item.isHeader" class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2" :style="{ backgroundColor: slotProps.item.color }">
+                        <span v-if="slotProps.item.isHeader"
+                              class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2"
+                              :style="{ backgroundColor: slotProps.item.color }">
                             <i :class="[slotProps.item.icon]" style="font-size: xx-large"></i>
                         </span>
-                        <span v-else class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }"></span>
+                        <span v-else
+                              class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
+                              :style="{ backgroundColor: slotProps.item.color }"></span>
                     </template>
                     <!-- The #content slot also checks if the item is a header -->
                     <template #content="slotProps">
-                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}</div>
+                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}
+                        </div>
                         <Card v-else>
-                            <template #title><div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div></template>
-                            <template #subtitle><div class="text-base">{{ getUnit(slotProps.item.name) }}</div></template>
+                            <template #title>
+                                <div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div>
+                            </template>
+                            <template #subtitle>
+                                <div class="text-base">{{ getUnit(slotProps.item.name) }}</div>
+                            </template>
                             <template #content>
                                 <div class="mb-3">
                                     <span class="text-500">Last: </span>
-                                    <span class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3) }}</span>
+                                    <span
+                                        class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3)
+                                        }}</span>
                                 </div>
-                                <Chart type="line" :data="chartData[slotProps.item.name]" :options="chartOptions"></Chart>
+                                <Chart type="line" :data="chartData[slotProps.item.name]"
+                                       :options="chartOptions"></Chart>
                             </template>
                         </Card>
                     </template>
                     <template #opposite="slotProps">
                         <div v-if="!slotProps.item.isHeader" class="p-2">
-                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3) }}</strong></div>
-                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3) }}</strong></div>
+                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3)
+                                }}</strong></div>
+                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3)
+                                }}</strong></div>
                         </div>
                     </template>
                 </Timeline>
@@ -105,30 +133,44 @@
                 <Timeline :value="outputSteps" align="left" class="customized-timeline">
                     <!-- The #marker slot now checks if the item is a header -->
                     <template #marker="slotProps">
-                        <span v-if="slotProps.item.isHeader" class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2" :style="{ backgroundColor: slotProps.item.color }">
-                            <i :class="[slotProps.item.icon]" style="font-size: xx-large" ></i>
+                        <span v-if="slotProps.item.isHeader"
+                              class="flex w-10 h-10 align-items-center justify-content-center text-white border-circle z-1 shadow-2"
+                              :style="{ backgroundColor: slotProps.item.color }">
+                            <i :class="[slotProps.item.icon]" style="font-size: xx-large"></i>
                         </span>
-                        <span v-else class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" :style="{ backgroundColor: slotProps.item.color }"></span>
+                        <span v-else
+                              class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1"
+                              :style="{ backgroundColor: slotProps.item.color }"></span>
                     </template>
                     <!-- The #content slot also checks if the item is a header -->
                     <template #content="slotProps">
-                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}</div>
+                        <div v-if="slotProps.item.isHeader" class="text-2xl font-bold p-2">{{ slotProps.item.title }}
+                        </div>
                         <Card v-else>
-                            <template #title><div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div></template>
-                            <template #subtitle><div class="text-base">{{ getUnit(slotProps.item.name) }}</div></template>
+                            <template #title>
+                                <div class="text-lg font-semibold">{{ formatMetricName(slotProps.item.name) }}</div>
+                            </template>
+                            <template #subtitle>
+                                <div class="text-base">{{ getUnit(slotProps.item.name) }}</div>
+                            </template>
                             <template #content>
                                 <div class="mb-3">
                                     <span class="text-500">Last: </span>
-                                    <span class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3) }}</span>
+                                    <span
+                                        class="text-green-500 font-medium text-2xl">{{ slotProps.item.metric.last.toFixed(3)
+                                        }}</span>
                                 </div>
-                                <Chart type="line" :data="chartData[slotProps.item.name]" :options="chartOptions"></Chart>
+                                <Chart type="line" :data="chartData[slotProps.item.name]"
+                                       :options="chartOptions"></Chart>
                             </template>
                         </Card>
                     </template>
                     <template #opposite="slotProps">
                         <div v-if="!slotProps.item.isHeader" class="p-2">
-                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3) }}</strong></div>
-                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3) }}</strong></div>
+                            <div class="text-500">Avg: <strong class="text-700">{{ slotProps.item.metric.avg.toFixed(3)
+                                }}</strong></div>
+                            <div class="text-500">Max: <strong class="text-700">{{ slotProps.item.metric.max.toFixed(3)
+                                }}</strong></div>
                         </div>
                     </template>
                 </Timeline>
@@ -140,8 +182,9 @@
 
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import axios from 'axios';
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import axios from "axios";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_PROCESSOR ?? "";
 
 // --- Reactive State (unchanged) ---
@@ -156,39 +199,39 @@ let intervalId = null;
 // This is the single source of truth for the timeline layout.
 const pipelineGroups = [
     {
-        title: 'Frame Ingestion',
-        icon: 'pi pi-camera',
-        color: '#3B82F6', // Blue
-        metrics: ['upload_frame_qps']
+        title: "Frame Ingestion",
+        icon: "pi pi-camera",
+        color: "#3B82F6", // Blue
+        metrics: ["upload_frame_qps"]
     },
     {
-        title: 'AI Processing',
-        icon: 'pi pi-microchip',
-        color: '#8B5CF6', // Purple
+        title: "AI Processing",
+        icon: "pi pi-microchip",
+        color: "#8B5CF6", // Purple
         metrics: [
-            'decode_time_ms',
-            'dfine_inference_time_ms',
-            'sort_and_cache_time_ms',
-            'draw_time_ms',
-            'ocr_time_ms',
-            'total_processing_time_ms'
+            "decode_time_ms",
+            "dfine_inference_time_ms",
+            "sort_and_cache_time_ms",
+            "draw_time_ms",
+            "ocr_time_ms",
+            "total_processing_time_ms"
         ]
     },
     {
-        title: 'Output Generation',
-        icon: 'pi pi-chart-line',
-        color: '#10B981', // Green
+        title: "Output Generation",
+        icon: "pi pi-chart-line",
+        color: "#10B981", // Green
         metrics: [
-            'output_panel_time_ms',
-            'output_api_time_ms',
-            'output_draw_time_ms',
-            'output_encode_time_ms',
-            'output_total_processing_time_ms',
-            'output_fps'
+            "output_panel_time_ms",
+            "output_placement_time_ms",
+            "output_api_time_ms",
+            "output_draw_time_ms",
+            "output_encode_time_ms",
+            "output_total_processing_time_ms",
+            "output_fps"
         ]
     }
 ];
-
 
 
 /// --- NEW: Helper function and 3 separate computed properties ---
@@ -213,7 +256,7 @@ const createTimelineSteps = (groupTitle) => {
                 isHeader: false, // Mark this as a regular item
                 name: metricName,
                 metric: metricData,
-                color: group.color,
+                color: group.color
             };
         }
         return null;
@@ -224,9 +267,9 @@ const createTimelineSteps = (groupTitle) => {
 };
 
 // Create a computed property for each timeline.
-const ingestionSteps = computed(() => createTimelineSteps('Frame Ingestion'));
-const aiProcessingSteps = computed(() => createTimelineSteps('AI Processing'));
-const outputSteps = computed(() => createTimelineSteps('Output Generation'));
+const ingestionSteps = computed(() => createTimelineSteps("Frame Ingestion"));
+const aiProcessingSteps = computed(() => createTimelineSteps("AI Processing"));
+const outputSteps = computed(() => createTimelineSteps("Output Generation"));
 
 // --- Chart Options (unchanged) ---
 const chartOptions = {
@@ -236,7 +279,7 @@ const chartOptions = {
     plugins: { legend: { display: false } },
     scales: {
         x: { ticks: { display: false }, grid: { display: false } },
-        y: { ticks: { color: '#495057', font: { size: 10 } }, grid: { color: '#ebedef' } }
+        y: { ticks: { color: "#495057", font: { size: 10 } }, grid: { color: "#ebedef" } }
     },
     elements: { point: { radius: 0 } },
     tension: 0.4
@@ -248,17 +291,25 @@ const fetchData = async () => {
         const response = await axios.get(`${BASE_URL}/api/metrics`);
         const data = response.data;
         error.value = null;
-        if (data.status === 'success' && data.metrics) {
+        if (data.status === "success" && data.metrics) {
             metrics.value = data.metrics;
             lastUpdateTime.value = new Date().toLocaleTimeString();
             updateAllCharts(data.metrics);
-        } else { throw new Error(data.message || 'API response was not in the expected format.'); }
+        } else {
+            throw new Error(data.message || "API response was not in the expected format.");
+        }
     } catch (e) {
         console.error("Failed to fetch metrics:", e);
-        if (e.response) { error.value = `API Error: ${e.response.status} - ${e.response.data.message || 'Server Error'}`; }
-        else if (e.request) { error.value = 'Failed to connect to the API. Is the backend server running?'; }
-        else { error.value = `An unexpected error occurred: ${e.message}`; }
-    } finally { loading.value = false; }
+        if (e.response) {
+            error.value = `API Error: ${e.response.status} - ${e.response.data.message || "Server Error"}`;
+        } else if (e.request) {
+            error.value = "Failed to connect to the API. Is the backend server running?";
+        } else {
+            error.value = `An unexpected error occurred: ${e.message}`;
+        }
+    } finally {
+        loading.value = false;
+    }
 };
 
 const MAX_CHART_POINTS = 30;
@@ -269,10 +320,10 @@ const updateAllCharts = (newMetrics) => {
         const newData = [...currentData, lastValue];
         if (newData.length > MAX_CHART_POINTS) newData.shift();
         chartData.value[name] = {
-            labels: Array(newData.length).fill(''),
+            labels: Array(newData.length).fill(""),
             datasets: [{
-                label: 'Last Value', data: newData, fill: true,
-                borderColor: '#42A5F5', backgroundColor: 'rgba(66,165,245,0.2)', borderWidth: 2
+                label: "Last Value", data: newData, fill: true,
+                borderColor: "#42A5F5", backgroundColor: "rgba(66,165,245,0.2)", borderWidth: 2
             }]
         };
     }
@@ -286,11 +337,11 @@ onUnmounted(() => {
     if (intervalId) clearInterval(intervalId);
 });
 
-const formatMetricName = (name) => name.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+const formatMetricName = (name) => name.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 const getUnit = (name) => {
-    if (name.includes('_ms')) return 'ms';
-    if (name.includes('qps') || name.includes('fps')) return name.split('_').pop().toUpperCase();
-    return 'Value';
+    if (name.includes("_ms")) return "ms";
+    if (name.includes("qps") || name.includes("fps")) return name.split("_").pop().toUpperCase();
+    return "Value";
 };
 </script>
 
@@ -299,15 +350,19 @@ const getUnit = (name) => {
     .p-timeline-event:nth-child(even) {
         @media screen and (max-width: 960px) {
             flex-direction: row !important;
-            .p-timeline-event-content { text-align: left !important; }
+            .p-timeline-event-content {
+                text-align: left !important;
+            }
         }
     }
+
     .p-timeline-event-opposite {
         @media screen and (max-width: 960px) {
             flex: 0;
             padding: 0;
         }
     }
+
     .p-card {
         margin-top: 1rem;
     }
