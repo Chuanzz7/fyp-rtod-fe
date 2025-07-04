@@ -253,13 +253,7 @@ const statuses = ref([
                     <InputText id="category" v-model.trim="product.category" :invalid="submitted && !product.category" fluid />
                     <small v-if="submitted && !product.category" class="text-red-500">Category is required.</small>
                 </div>
-                <div class="col-span-6">
-                    <label for="inventoryStatus" class="block font-bold mb-3">Inventory Status</label>
-                    <Select id="inventoryStatus" v-model="product.inventoryStatus" :options="statuses"
-                            optionLabel="label" optionValue="value" placeholder="Select a Status"
-                            :invalid="submitted && !product.inventoryStatus" fluid></Select>
-                    <small v-if="submitted && !product.inventoryStatus" class="text-red-500">Status is required.</small>
-                </div>
+
             </div>
         </div>
 

@@ -2,8 +2,8 @@
 import axios from "axios";
 import { FilterMatchMode } from "@primevue/core/api";
 import { useToast } from "primevue/usetoast";
-import { onMounted, ref } from "vue";
-import ProductDialog from '../components/product/ProductDialog.vue';
+import { onMounted, onUnmounted, ref } from "vue";
+import ProductDialog from "../components/product/ProductDialog.vue";
 
 const API_BASE = import.meta.env.VITE_API_BASE_PRODUCTS;
 
@@ -11,8 +11,8 @@ const toast = useToast();
 
 // For product lookup feature
 const lookupDialog = ref(false);
-const lookupCategory = ref('');
-const lookupOcr = ref('');
+const lookupCategory = ref("");
+const lookupOcr = ref("");
 const lookupResult = ref(null);
 const lookupLoading = ref(false);
 const dt = ref();
@@ -31,8 +31,18 @@ const statuses = ref([
     { label: "LOWSTOCK", value: "lowstock" },
     { label: "OUTOFSTOCK", value: "outofstock" }
 ]);
+let refreshIntervalId = null;
 
-onMounted(fetchProducts);
+onMounted(() => {
+    fetchProducts(); // Initial fetch
+    refreshIntervalId = setInterval(fetchProducts, 1000); // Every 1 second
+});
+
+onUnmounted(() => {
+    if (refreshIntervalId) {
+        clearInterval(refreshIntervalId);
+    }
+});
 
 async function fetchProducts() {
     try {
@@ -66,35 +76,35 @@ async function saveProduct() {
             const formData = new FormData();
 
             // Add all form fields to FormData
-            formData.append('name', selectedProduct.value.name);
-            formData.append('description', selectedProduct.value.description || '');
-            formData.append('category', selectedProduct.value.category || '');
-            formData.append('price', selectedProduct.value.price || 0);
-            formData.append('quantity', selectedProduct.value.quantity || 0);
-            formData.append('ocr', selectedProduct.value.ocr || '');
+            formData.append("name", selectedProduct.value.name);
+            formData.append("description", selectedProduct.value.description || "");
+            formData.append("category", selectedProduct.value.category || "");
+            formData.append("price", selectedProduct.value.price || 0);
+            formData.append("quantity", selectedProduct.value.quantity || 0);
+            formData.append("ocr", selectedProduct.value.ocr || "");
 
             // Handle inventory status - it could be an object or a string
-            let inventoryStatus = 'INSTOCK';
+            let inventoryStatus = "INSTOCK";
 
             if (selectedProduct.value.inventoryStatus) {
-                if (typeof selectedProduct.value.inventoryStatus === 'object' && selectedProduct.value.inventoryStatus.value) {
+                if (typeof selectedProduct.value.inventoryStatus === "object" && selectedProduct.value.inventoryStatus.value) {
                     // It's an object with a value property
                     inventoryStatus = selectedProduct.value.inventoryStatus.value;
-                } else if (typeof selectedProduct.value.inventoryStatus === 'string') {
+                } else if (typeof selectedProduct.value.inventoryStatus === "string") {
                     // It's already a string
                     inventoryStatus = selectedProduct.value.inventoryStatus;
                 }
             }
 
-            formData.append('inventoryStatus', inventoryStatus);
+            formData.append("inventoryStatus", inventoryStatus);
 
             // Add image file if present
             if (selectedProduct.value.imageFile) {
-                formData.append('image', selectedProduct.value.imageFile);
-            } else if (selectedProduct.value.image && typeof selectedProduct.value.image === 'string' && selectedProduct.value.image.startsWith('data:')) {
+                formData.append("image", selectedProduct.value.imageFile);
+            } else if (selectedProduct.value.image && typeof selectedProduct.value.image === "string" && selectedProduct.value.image.startsWith("data:")) {
                 // Convert data URL to File object if needed
-                const imageFile = dataURLtoFile(selectedProduct.value.image, 'product-image.jpg');
-                formData.append('image', imageFile);
+                const imageFile = dataURLtoFile(selectedProduct.value.image, "product-image.jpg");
+                formData.append("image", imageFile);
             }
 
             let data;
@@ -102,7 +112,7 @@ async function saveProduct() {
                 // Update existing product
                 const response = await axios.put(`${API_BASE}/api/products/${selectedProduct.value.id}`, formData, {
                     headers: {
-                        'Content-Type': 'multipart/form-data'
+                        "Content-Type": "multipart/form-data"
                     }
                 });
                 data = response.data;
@@ -113,7 +123,7 @@ async function saveProduct() {
                 // Create new product
                 const response = await axios.post(`${API_BASE}/api/products`, formData, {
                     headers: {
-                        'Content-Type': 'multipart/form-data'
+                        "Content-Type": "multipart/form-data"
                     }
                 });
                 data = response.data;
@@ -123,7 +133,7 @@ async function saveProduct() {
             productDialogData.value = false;
             selectedProduct.value = {};
         } catch (e) {
-            console.error('Error saving product:', e);
+            console.error("Error saving product:", e);
             toast.add({
                 severity: "error",
                 summary: "Error",
@@ -139,7 +149,7 @@ function editProduct(prod) {
     const productCopy = { ...prod };
 
     // Map string inventory status to the correct object format if needed
-    if (productCopy.inventoryStatus && typeof productCopy.inventoryStatus === 'string') {
+    if (productCopy.inventoryStatus && typeof productCopy.inventoryStatus === "string") {
         const matchingStatus = statuses.value.find(s => s.value === productCopy.inventoryStatus.toLowerCase());
         if (matchingStatus) {
             productCopy.inventoryStatus = matchingStatus;
@@ -163,7 +173,7 @@ async function deleteProduct() {
         selectedProduct.value = {};
         toast.add({ severity: "success", summary: "Successful", detail: "Product Deleted", life: 3000 });
     } catch (e) {
-        console.error('Error deleting product:', e);
+        console.error("Error deleting product:", e);
         toast.add({
             severity: "error",
             summary: "Error",
@@ -196,7 +206,7 @@ async function deleteSelectedProducts() {
         selectedProducts.value = [];
         toast.add({ severity: "success", summary: "Successful", detail: "Products Deleted", life: 3000 });
     } catch (e) {
-        console.error('Error deleting products:', e);
+        console.error("Error deleting products:", e);
         toast.add({
             severity: "error",
             summary: "Error",
@@ -208,11 +218,11 @@ async function deleteSelectedProducts() {
 
 function getStatusLabel(status) {
     switch (status) {
-        case "INSTOCK":
+        case "in_stock":
             return "success";
-        case "LOWSTOCK":
+        case "low_stock":
             return "warn";
-        case "OUTOFSTOCK":
+        case "out_of_stock":
             return "danger";
         default:
             return null;
@@ -220,15 +230,15 @@ function getStatusLabel(status) {
 }
 
 function getImageUrl(imageName) {
-    if (!imageName) return '';
+    if (!imageName) return "";
 
     // Check if it's a placeholder image
-    if (imageName === 'product-placeholder.svg') {
-        return 'https://primefaces.org/cdn/primevue/images/product/product-placeholder.svg';
+    if (imageName === "product-placeholder.svg") {
+        return "https://primefaces.org/cdn/primevue/images/product/product-placeholder.svg";
     }
 
     // Handle data URLs directly
-    if (typeof imageName === 'string' && imageName.startsWith('data:')) {
+    if (typeof imageName === "string" && imageName.startsWith("data:")) {
         return imageName;
     }
 
@@ -238,7 +248,7 @@ function getImageUrl(imageName) {
 
 // Helper function to convert data URL to File object
 function dataURLtoFile(dataURL, filename) {
-    const arr = dataURL.split(',');
+    const arr = dataURL.split(",");
     const mime = arr[0].match(/:(.*?);/)[1];
     const bstr = atob(arr[1]);
     let n = bstr.length;
@@ -279,7 +289,7 @@ async function performProductLookup() {
             life: 3000
         });
     } catch (e) {
-        console.error('Lookup error:', e);
+        console.error("Lookup error:", e);
         toast.add({
             severity: "error",
             summary: "Lookup Failed",
@@ -415,19 +425,22 @@ async function performProductLookup() {
 
                 <!-- Lookup button -->
                 <div class="flex justify-end">
-                    <Button label="Lookup Product" icon="pi pi-search" @click="performProductLookup" :loading="lookupLoading" />
+                    <Button label="Lookup Product" icon="pi pi-search" @click="performProductLookup"
+                            :loading="lookupLoading" />
                 </div>
 
                 <!-- Results section -->
                 <div v-if="lookupResult" class="mt-4 p-4 border rounded bg-gray-50">
                     <h3 class="text-xl font-bold mb-3">Found Product</h3>
                     <div class="flex items-start gap-3">
-                        <img :src="getImageUrl(lookupResult.image)" class="w-20 h-20 object-contain" :alt="lookupResult.name" />
+                        <img :src="getImageUrl(lookupResult.image)" class="w-20 h-20 object-contain"
+                             :alt="lookupResult.name" />
                         <div>
                             <p class="font-bold text-lg">{{ lookupResult.name }}</p>
                             <p class="text-sm text-gray-600">Category: {{ lookupResult.category }}</p>
                             <p class="text-sm text-gray-600">Price: {{ formatCurrency(lookupResult.price) }}</p>
-                            <p class="text-sm text-green-600 font-bold">Match confidence: {{ Math.round(lookupResult.confidence * 100) }}%</p>
+                            <p class="text-sm text-green-600 font-bold">Match confidence:
+                                {{ Math.round(lookupResult.confidence * 100) }}%</p>
                         </div>
                     </div>
                 </div>
