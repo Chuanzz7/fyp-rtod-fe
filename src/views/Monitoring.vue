@@ -40,15 +40,7 @@ const regionForm = ref({
         x2: 0,
         y2: 0
     },
-    type: "detection"
 });
-
-// Dropdown options
-const regionTypes = [
-    { label: "Detection", value: "detection" },
-    { label: "Exclusion", value: "exclusion" },
-    { label: "ROI", value: "roi" }
-];
 
 // Computed
 const dialogTitle = computed(() => {
@@ -96,7 +88,6 @@ function openCreateDialog() {
             x2: 100,
             y2: 100
         },
-        type: "detection"
     };
     showDialog.value = true;
 }
@@ -107,7 +98,6 @@ function openEditDialog(region) {
     regionForm.value = {
         label: region.label,
         bbox: { ...region.bbox },
-        type: region.type
     };
     showDialog.value = true;
 }
@@ -123,7 +113,6 @@ function closeDialog() {
             x2: 0,
             y2: 0
         },
-        type: "detection"
     };
 }
 
@@ -145,7 +134,6 @@ async function saveRegion() {
             const newRegions = [...regions.value, {
                 label: regionForm.value.label,
                 bbox: regionForm.value.bbox,
-                type: regionForm.value.type
             }];
 
             const updateData = {
@@ -157,7 +145,6 @@ async function saveRegion() {
                         x2: region.bbox.x2,
                         y2: region.bbox.y2
                     },
-                    type: region.type
                 }))
             };
 
@@ -173,7 +160,6 @@ async function saveRegion() {
                     x2: regionForm.value.bbox.x2,
                     y2: regionForm.value.bbox.y2
                 },
-                type: regionForm.value.type
             };
 
             await axios.post(`${BASE_URL}/api/regions/single?region_index=${selectedRegion.value.index}`, updateData);
@@ -320,21 +306,6 @@ onBeforeUnmount(() => {
                                 </template>
                             </Column>
 
-                            <Column field="type" header="Type" sortable>
-                                <template #body="slotProps">
-                                    <span
-                                        class="px-2 py-1 border-round text-sm"
-                                        :class="{
-                                            'bg-primary-100 text-primary-800': slotProps.data.type === 'detection',
-                                            'bg-orange-100 text-orange-800': slotProps.data.type === 'exclusion',
-                                            'bg-green-100 text-green-800': slotProps.data.type === 'roi'
-                                        }"
-                                    >
-                                        {{ slotProps.data.type.charAt(0).toUpperCase() + slotProps.data.type.slice(1) }}
-                                    </span>
-                                </template>
-                            </Column>
-
                             <Column field="bbox" header="Bounding Box">
                                 <template #body="slotProps">
                                     <code class="text-sm bg-gray-100 px-2 py-1 border-round">
@@ -431,19 +402,6 @@ onBeforeUnmount(() => {
                     :class="{ 'p-invalid': regionForm.label.trim() === '' }"
                 />
             </div>
-
-            <div class="field col-12">
-                <label for="type">Type *</label>
-                <Dropdown
-                    id="type"
-                    v-model="regionForm.type"
-                    :options="regionTypes"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select region type"
-                />
-            </div>
-
             <div class="field col-12">
                 <label>Bounding Box Coordinates *</label>
                 <div class="grid formgrid p-fluid">

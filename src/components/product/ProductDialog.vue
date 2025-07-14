@@ -245,16 +245,6 @@ const statuses = ref([
                     <small v-if="submitted && !product.quantity" class="text-red-500">Quantity is required.</small>
                 </div>
             </div>
-
-            <!-- Category and status in same row -->
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-6">
-                    <label for="category" class="block font-bold mb-3">Category</label>
-                    <InputText id="category" v-model.trim="product.category" :invalid="submitted && !product.category" fluid />
-                    <small v-if="submitted && !product.category" class="text-red-500">Category is required.</small>
-                </div>
-
-            </div>
         </div>
 
         <template #footer>
