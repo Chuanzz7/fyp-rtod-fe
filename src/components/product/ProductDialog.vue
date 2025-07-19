@@ -4,6 +4,7 @@ import { useToast } from "primevue/usetoast";
 import axios from "axios";
 
 const PRODUCT_BASE = import.meta.env.VITE_API_BASE_PRODUCTS ?? "";
+const MONITOR_BASE = import.meta.env.VITE_API_BASE_PROCESSOR ?? "";
 
 const toast = useToast();
 
@@ -25,6 +26,8 @@ const preview = ref("");
 const imageFile = ref(null);
 const fileInput = ref(null);
 const dropZone = ref(null);
+const piPhotoUrl = ref("");
+const piPhotoLoading = ref(false);
 
 // Watch for changes to product and update preview accordingly
 watch(() => product.value, (newProduct) => {
@@ -69,6 +72,7 @@ function handleImageFile(file) {
 }
 
 function removeImage() {
+    piPhotoUrl.value = "";
     imageFile.value = null;
     preview.value = "";
     product.value.image = "";
@@ -140,11 +144,38 @@ function copyToClipboard(text) {
         });
 }
 
-const statuses = ref([
-    { label: "INSTOCK", value: "instock" },
-    { label: "LOWSTOCK", value: "lowstock" },
-    { label: "OUTOFSTOCK", value: "outofstock" }
-]);
+async function onTakePiPhoto() {
+    piPhotoLoading.value = true;
+    try {
+        // Cache-busting param for new photo each time
+        const url = `${MONITOR_BASE}/api/photo?ts=${Date.now()}`;
+        // We want the image as a blob so it shows as a preview
+        const res = await axios.get(url, { responseType: 'blob' });
+        piPhotoUrl.value = URL.createObjectURL(res.data);
+        // If you want to set it as the product image for further processing/detection:
+        // Convert blob to File and assign to your product logic:
+        const file = new File([res.data], "pi_photo.jpg", { type: "image/jpeg" });
+        imageFile.value = file;
+        product.value.imageFile = file;
+        // Show the preview as a data URL (for your preview logic)
+        const reader = new FileReader();
+        reader.onload = e => {
+            preview.value = e.target.result;
+            product.value.image = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        result.value = null;
+    } catch (e) {
+        toast.add({ severity: "error", summary: "Camera Failed", detail: "Could not take photo from Pi", life: 3000 });
+    }
+    piPhotoLoading.value = false;
+}
+
+function removePiPhoto() {
+    piPhotoUrl.value = "";
+    // Optionally clear preview/product/imageFile if you want:
+    removeImage();
+}
 </script>
 
 
@@ -155,6 +186,15 @@ const statuses = ref([
             <!-- Image Upload + Preview + Detect Button -->
             <div>
                 <label class="block font-bold mb-3">Image</label>
+                <div class="flex items-center gap-2 mt-2">
+                    <Button
+                        label="Take Photo with Pi Camera"
+                        icon="pi pi-camera"
+                        @click="onTakePiPhoto"
+                        :loading="piPhotoLoading"
+                        text
+                    />
+                </div>
                 <div
                     ref="dropZone"
                     class="flex items-center gap-3 border-2 border-dashed rounded p-3 text-center cursor-pointer transition-all duration-200 hover:bg-gray-50 hover:border-primary"
